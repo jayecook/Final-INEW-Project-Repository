@@ -1,0 +1,21 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: inventory
+    ports:
+      - "5432:5432"
+
+  app:
+    build: .
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: jdbc:postgresql://db:5432/inventory?user=postgres&password=postgres
+      SMTP_HOST: smtp.yourcompany.com
+      SMTP_PORT: 587
+      SMTP_USER: your_user
+      SMTP_PASS: your_pass
+      MAIL_FROM: alerts@yourcompany.com
