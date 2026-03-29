@@ -1,5 +1,8 @@
 # Maven-Project-for-INEW-2332
 Project for use with JAVA with following file sourcing.
+
+Link to frontend file: https://drive.google.com/drive/folders/1LpPQTvy-qyCR0Po614dKPc-QwLcslk3H?usp=sharing
+
 inventory-management-system/
 ├── .github/
 │   └── workflows/
