@@ -1,0 +1,18 @@
+INSERT INTO users (username, password, role) VALUES
+('admin', '$2a$10$2D8iQXQ4x9x4l8r1Q7Pxb.7jNOw6s1X6pZJ0Q8Qd9o1F4QmZ0sJmK', 'ADMIN'),
+('shopper', '$2a$10$2D8iQXQ4x9x4l8r1Q7Pxb.7jNOw6s1X6pZJ0Q8Qd9o1F4QmZ0sJmK', 'USER');
+
+-- Password for both seeded users:
+-- Admin123!
+
+INSERT INTO products (product_id, product_type, product_amount, product_count, threshold) VALUES
+(1001, '2x4 Pressure-Treated Lumber', 8.98, 55, 10),
+(1002, 'Drywall Screws 5 lb Box', 29.97, 18, 8),
+(1003, 'PVC Pipe 1/2 inch x 10 ft', 6.48, 32, 12),
+(1004, 'Interior Latex Paint 1 Gallon', 34.98, 14, 6),
+(1005, 'Joint Compound 4.5 Gallon', 18.47, 9, 5),
+(1006, 'Electrical Outlet 15 Amp Duplex', 1.28, 40, 15),
+(1007, 'LED Light Bulb 60W Equivalent 4-Pack', 9.97, 22, 10),
+(1008, 'Kitchen Faucet Pull-Down Stainless', 89.00, 7, 4),
+(1009, 'Ceramic Floor Tile 12x12', 1.79, 120, 30),
+(1010, 'Cordless Drill/Driver Kit 20V', 99.00, 5, 4);

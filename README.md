@@ -1,33 +1,95 @@
 # Maven-Project-for-INEW-2332
 Project for use with JAVA with following file sourcing.
-postgres-inventory-alerts/
-├─ .github/
-│  └─ workflows/
-│     └─ ci.yml
-├─ src/
-│  ├─ main/
-│  │  ├─ java/
-│  │  │  └─ com/
-│  │  │     └─ company/
-│  │  │        └─ inventory/
-│  │  │           ├─ App.java
-│  │  │           ├─ DatabaseInitializer.java
-│  │  │           ├─ EmailService.java
-│  │  │           └─ LowStockWorker.java
-│  │  └─ resources/
-│  │     ├─ application.properties
-│  │     └─ sql/
-│  │        ├─ 001_schema.sql
-│  │        └─ 002_seed_demo.sql
-│  └─ test/
-│     └─ java/
-│        └─ com/
-│           └─ company/
-│              └─ inventory/
-│                 └─ AppTest.java
-├─ .env.example
-├─ .gitignore
-├─ Dockerfile
-├─ docker-compose.yml
-├─ pom.xml
-└─ README.md
+inventory-management-system/
+├── .github/
+│   └── workflows/
+│       ├── backend-ci.yml
+│       ├── frontend-ci.yml
+│       └── deploy-render.yml
+│
+├── backend/
+│   ├── Dockerfile
+│   ├── .dockerignore
+│   ├── .env.example
+│   ├── pom.xml
+│   └── src/
+│       ├── main/
+│       │   ├── java/
+│       │   │   └── com/example/inventory/
+│       │   │       ├── InventoryApplication.java
+│       │   │       ├── config/
+│       │   │       │   ├── CorsConfig.java
+│       │   │       │   ├── PasswordConfig.java
+│       │   │       │   └── SecurityConfig.java
+│       │   │       ├── controller/
+│       │   │       │   ├── AlertController.java
+│       │   │       │   ├── AuthController.java
+│       │   │       │   └── ProductController.java
+│       │   │       ├── dto/
+│       │   │       │   ├── LoginRequest.java
+│       │   │       │   ├── LoginResponse.java
+│       │   │       │   ├── ProductRequest.java
+│       │   │       │   └── ProductResponse.java
+│       │   │       ├── exception/
+│       │   │       │   ├── GlobalExceptionHandler.java
+│       │   │       │   └── ResourceNotFoundException.java
+│       │   │       ├── model/
+│       │   │       │   ├── Product.java
+│       │   │       │   └── User.java
+│       │   │       ├── repository/
+│       │   │       │   ├── ProductRepository.java
+│       │   │       │   └── UserRepository.java
+│       │   │       └── service/
+│       │   │           ├── AlertService.java
+│       │   │           ├── AuthService.java
+│       │   │           ├── CustomUserDetailsService.java
+│       │   │           ├── EmailService.java
+│       │   │           └── ProductService.java
+│       │   └── resources/
+│       │       ├── application.properties
+│       │       ├── data.sql
+│       │       └── schema.sql
+│       └── test/
+│           └── java/
+│               └── com/example/inventory/
+│                   └── InventoryApplicationTests.java
+│
+├── frontend/
+│   ├── Dockerfile
+│   ├── .dockerignore
+│   ├── .env.example
+│   ├── nginx.conf
+│   ├── package.json
+│   ├── public/
+│   │   └── index.html
+│   └── src/
+│       ├── App.js
+│       ├── index.js
+│       ├── api/
+│       │   ├── authApi.js
+│       │   └── productApi.js
+│       ├── components/
+│       │   ├── AdminDashboard.jsx
+│       │   ├── LandingPage.jsx
+│       │   ├── LoginPage.jsx
+│       │   ├── ProductForm.jsx
+│       │   ├── ProductList.jsx
+│       │   ├── ProductRow.jsx
+│       │   ├── PublicInventoryPage.jsx
+│       │   └── SearchFilters.jsx
+│       └── styles/
+│           └── app.css
+│
+├── deployment/
+│   ├── docker-compose.yml
+│   ├── railway.md
+│   └── render.yaml
+│
+├── docs/
+│   ├── DEPLOYMENT.md
+│   ├── EMAIL_ALERTS.md
+│   ├── SECRETS.md
+│   └── SETUP.md
+│
+├── .gitignore
+└── README.md
