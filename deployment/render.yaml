@@ -1,0 +1,55 @@
+services:
+  - type: web
+    name: inventory-backend
+    runtime: docker
+    repo: https://github.com/YOUR_GITHUB_USERNAME/inventory-management-system
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    plan: free
+    autoDeploy: true
+    healthCheckPath: /api/products/public
+    envVars:
+      - key: SPRING_DATASOURCE_URL
+        fromDatabase:
+          name: inventory-db
+          property: connectionString
+      - key: SPRING_DATASOURCE_USERNAME
+        fromDatabase:
+          name: inventory-db
+          property: user
+      - key: SPRING_DATASOURCE_PASSWORD
+        fromDatabase:
+          name: inventory-db
+          property: password
+      - key: FRONTEND_URL
+        value: https://inventory-frontend.onrender.com
+      - key: SPRING_MAIL_HOST
+        sync: false
+      - key: SPRING_MAIL_PORT
+        value: "587"
+      - key: SPRING_MAIL_USERNAME
+        sync: false
+      - key: SPRING_MAIL_PASSWORD
+        sync: false
+      - key: SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH
+        value: "true"
+      - key: SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE
+        value: "true"
+      - key: ALERT_EMAIL_TO
+        sync: false
+
+  - type: web
+    name: inventory-frontend
+    runtime: docker
+    repo: https://github.com/YOUR_GITHUB_USERNAME/inventory-management-system
+    rootDir: frontend
+    dockerfilePath: ./Dockerfile
+    plan: free
+    autoDeploy: true
+    envVars:
+      - key: REACT_APP_API_URL
+        value: https://inventory-backend.onrender.com/api
+
+databases:
+  - name: inventory-db
+    plan: free
