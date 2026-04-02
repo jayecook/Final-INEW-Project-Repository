@@ -43,7 +43,7 @@ function App() {
     const payload = {
       name: form.name,
       description: form.description,
-      price: form.price === "" ? null : parseInt(form.price),
+      price: form.price === "" ? null : (Math.round((parseFloat(form.price) * 100))) / 100,
     };
 
     if (editingId !== null) {
@@ -134,6 +134,7 @@ function App() {
               <label>Price ($)</label>
               <input
                 type="number"
+                step="0.01"
                 placeholder="0"
                 value={form.price}
                 onChange={e => setForm({ ...form, price: e.target.value })}
@@ -189,7 +190,7 @@ function App() {
                   <div className="product-desc">{product.description || '—'}</div>
                 </div>
                 <div className={`product-price ${product.price == null ? 'null-price' : ''}`}>
-                  {product.price != null ? `$${product.price}` : 'N/A'}
+                  {product.price != null ? `$${product.price.toFixed(2)}` : 'N/A'}
                 </div>
                 <div className="product-actions">
                   <button className="btn btn-edit" onClick={() => handleEdit(product)}>Edit</button>
