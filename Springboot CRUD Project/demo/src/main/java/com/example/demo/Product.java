@@ -20,6 +20,6 @@ public class Product {
     private int id;
     private String name;
     private String description;
-    private Integer price;
+    private Float price;
     private String product_type;
 }
