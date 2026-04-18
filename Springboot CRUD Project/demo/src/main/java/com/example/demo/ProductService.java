@@ -50,6 +50,14 @@ public class ProductService {
             updatedProduct.setPrice(requestBody.getPrice());
         }
 
+        if(requestBody.getDescription() != null) {
+            updatedProduct.setDescription(requestBody.getDescription());
+        }
+
+        if(requestBody.getCount() != null) {
+            updatedProduct.setCount(requestBody.getCount());
+        }
+
         return productRepository.save(updatedProduct);
     } 
         return null;
