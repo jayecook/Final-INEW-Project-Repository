@@ -22,6 +22,7 @@ function App() {
 
   // NEW: Search & Filter States
   const [searchTerm, setSearchTerm] = useState("");
+  const [searchCount, setSearchCount] = useState("");
   const [filterType, setFilterType] = useState("all");
   const [sortBy, setSortBy] = useState("id"); // Default: Product ID
 
@@ -29,18 +30,26 @@ function App() {
     fetchProducts();
   }, []);
 
-  const showToast = (msg, type = "success") => {
+    const showToast = (msg, type = "success") => {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 3000);
   };
 
-  const fetchProducts = async () => {
+    const fetchProducts = async () => {
     try {
       setLoading(true);
       const res = await fetch(API);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
-      setProducts(data);
+
+    const normalizedProducts = data.map((product) => ({
+  ...product,
+  type: product.type ?? product.product_type ?? "",
+  count: Number(product.count ?? 0),
+}));;
+
+console.log("normalizedProducts", normalizedProducts);
+setProducts(normalizedProducts);
     } catch (err) {
       console.error(err);
       showToast("Failed to fetch products", "error");
@@ -56,40 +65,40 @@ function App() {
   };
 
   const handleSubmit = async () => {
-    if (!form.name.trim()) return showToast("Name is required", "error");
-    if (!form.type) return showToast("Type is required", "error");
-    if (!form.count) return showToast("Count is required", "error");
-    if (!form.price) return showToast("Price is required", "error");
-    if (!form.description) return showToast("Description is required", "error")
+  if (!form.name.trim()) return showToast("Name is required", "error");
+  if (form.count === "") return showToast("Count is required", "error");
+  if (!form.type) return showToast("Type is required", "error");
+  if (!form.price.trim()) return showToast("Price is required", "error");
+  if (!form.description.trim()) return showToast("Description is required", "error");
 
-    const payload = {
-      name: form.name.trim(),
-      description: form.description.trim(),
-      price: parsePrice(form.price),
-      type: form.type,
-      count: form.count ? parseInt(form.count) : 0,
-    };
-
-    try {
-      const url = editingId ? `${API}/${editingId}` : API;
-      const method = editingId ? "PUT" : "POST";
-
-      const res = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      
-      await fetchProducts();
-      setForm(initialForm);
-      setEditingId(null);
-      showToast(editingId ? "Product updated!" : "Product added!");
-    } catch (err) {
-      showToast(`Operation failed: ${err.message}`, "error");
-    }
+  const payload = {
+    name: form.name.trim(),
+    description: form.description.trim(),
+    price: parsePrice(form.price),
+    type: form.type,
+    count: parseInt(form.count, 10),
   };
+
+  try {
+    const url = editingId ? `${API}/${editingId}` : API;
+    const method = editingId ? "PUT" : "POST";
+
+    const res = await fetch(url, {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    await fetchProducts();
+    setForm(initialForm);
+    setEditingId(null);
+    showToast(editingId ? "Product updated!" : "Product added!");
+  } catch (err) {
+    showToast(`Operation failed: ${err.message}`, "error");
+  }
+};
 
   const handleEdit = (product) => {
     setEditingId(product.id);
@@ -122,27 +131,44 @@ function App() {
 
   // NEW: Filtering & Sorting Logic
   const filteredProducts = useMemo(() => {
-    return products
-      .filter(product => {
-        const matchesSearch = 
-          product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          product.id.toString().includes(searchTerm) ||
-          product.count?.toString().includes(searchTerm);
-        
-        const matchesType = filterType === "all" || product.type === filterType;
-        return matchesSearch && matchesType;
-      })
-      .sort((a, b) => {
-        if (sortBy === "id") return b.id - a.id;
-        if (sortBy === "name") return a.name.localeCompare(b.name);
-        if (sortBy === "count") return (b.count || 0) - (a.count || 0);
-        return 0;
-      });
-  }, [products, searchTerm, filterType, sortBy]);
+  return products
+    .filter((product) => {
+      const nameValue = product.name?.toLowerCase() || "";
+      const idValue = String(product.id ?? "");
+      const countValue = String(product.count ?? "");
+      const typeValue = product.type || "";
 
-  return (
-    <>
-      <div className="app">
+      let matchesMainSearch = true;
+
+      if (searchTerm.trim() !== "") {
+        if (sortBy === "id") {
+          matchesMainSearch = idValue.includes(searchTerm.trim());
+        } else if (sortBy === "name") {
+          matchesMainSearch = nameValue.includes(searchTerm.toLowerCase().trim());
+        } else if (sortBy === "count") {
+          matchesMainSearch = countValue.includes(searchTerm.trim());
+        }
+      }
+
+      const matchesCountSearch =
+        searchCount.trim() === "" || countValue.includes(searchCount.trim());
+
+      const matchesType =
+        filterType === "all" || typeValue === filterType;
+
+      return matchesMainSearch && matchesCountSearch && matchesType;
+    })
+    .sort((a, b) => {
+      if (sortBy === "id") return (a.id ?? 0) - (b.id ?? 0);
+      if (sortBy === "name") return (a.name || "").localeCompare(b.name || "");
+      if (sortBy === "count") return (a.count ?? 0) - (b.count ?? 0);
+      return 0;
+    });
+}, [products, searchTerm, searchCount, filterType, sortBy]);
+
+return (
+  <>
+    <div className="app">
         {/* Header */}
         <div className="header">
           <div className="header-tag">inventory system</div>
@@ -160,6 +186,12 @@ function App() {
         onChange={(e) => setSearchTerm(e.target.value)}
     />
   </div>
+        <input
+        type="number"
+        placeholder="Search by count"
+        value={searchCount}
+        onChange={e => setSearchCount(e.target.value)}
+      />
   
           <div className="filter-group">
             <select 
@@ -296,9 +328,9 @@ function App() {
 
                 <div className="product-stats">
                   <div className="product-count">
-                    <span className="count-label">Count:</span>
-                    <span className="count-value">{product.count ?? 0}</span>
-                  </div>
+                  <span className="count-label">Count: </span>
+                  <span className="count-value">{product.count}</span>
+            </div>
                   <div className={`product-price ${product.price == null ? 'null-price' : ''}`}>
                     {product.price != null ? `$${product.price.toFixed(2)}` : 'N/A'}
                   </div>
@@ -329,7 +361,7 @@ function App() {
       )}
 
       {/* Toast */}
-      {toast && (
+           {toast && (
         <div className={`toast ${toast.type}`}>
           {toast.type === 'success' ? '✓' : '✗'} {toast.msg}
         </div>
