@@ -1,4 +1,5 @@
 package com.example.demo;
+import java.math.BigDecimal;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -16,12 +17,19 @@ public class Product {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    @Column(name = "product_id")
+    private Long productId;
 
-    private String name;
-    private String description;
-    private Integer count;
-    private Float price;
-    private String product_type;
+    @Column(name = "product_type", nullable = false, length = 150)
+    private String productType;
+
+    @Column(name = "product_amount", nullable = false, precision = 10, scale = 2)
+    private BigDecimal productAmount;
+
+    @Column(name = "product_count", nullable = false)
+    private Integer productCount;
+
+    @Column(name = "threshold", nullable = false)
+    private Integer threshold;
 }
     

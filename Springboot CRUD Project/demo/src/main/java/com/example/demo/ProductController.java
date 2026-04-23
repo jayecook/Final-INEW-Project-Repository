@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
 import lombok.RequiredArgsConstructor;
 
 //Handles the url mapping
@@ -28,7 +29,7 @@ public class ProductController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Product> getById(@PathVariable int id){
+    public ResponseEntity<Product> getById(@PathVariable Long id){
         return ResponseEntity.ok().body(productService.getById(id));
     }
     
@@ -40,7 +41,7 @@ public class ProductController {
 
     //Put the update mapping here
     @PutMapping("/{id}")
-    public ResponseEntity<Product> updateProduct(@PathVariable int id, @RequestBody Product product) {
+    public ResponseEntity<Product> updateProduct(@PathVariable Long id, @RequestBody Product product) {
 	if (productService.updateProduct(id, product) != null) {
 	    return ResponseEntity.ok().body(productService.getById(id));
 	}
@@ -48,7 +49,7 @@ public class ProductController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<List<Product>> deleteById(@PathVariable int id){
+    public ResponseEntity<List<Product>> deleteById(@PathVariable Long id){
         productService.deleteById(id);
         return ResponseEntity.ok().body(productService.getAll());
     }
