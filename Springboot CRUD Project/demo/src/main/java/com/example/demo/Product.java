@@ -21,11 +21,17 @@ public class Product {
     @Column(name = "product_id")
     private Long productId;
 
-    @Column(name = "product_type", nullable = false, length = 150)
+    @Column(name = "product_name", nullable = false, length = 255)
+    private String productName;
+
+    @Column(name = "product_type", nullable = false, length = 255)
     private String productType;
 
-    @Column(name = "product_amount", nullable = false, precision = 10, scale = 2)
-    private BigDecimal productAmount;
+    @Column(name = "product_description", nullable = false, length = 255)
+    private String productDescription;
+
+    @Column(name = "product_price", nullable = false, precision = 10, scale = 2)
+    private BigDecimal productPrice;
 
     @Column(name = "product_count", nullable = false)
     private Integer productCount;

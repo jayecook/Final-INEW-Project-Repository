@@ -38,12 +38,20 @@ public class ProductService {
         if (existingProductOpt.isPresent()) {
             Product updatedProduct = existingProductOpt.get();
 
+            if (requestBody.getProductName() != null) {
+                updatedProduct.setProductName(requestBody.getProductName());
+            }
+            
             if (requestBody.getProductType() != null) {
                 updatedProduct.setProductType(requestBody.getProductType());
             }
 
-            if (requestBody.getProductAmount() != null) {
-                updatedProduct.setProductAmount(requestBody.getProductAmount());
+            if (requestBody.getProductDescription() != null) {
+                updatedProduct.setProductDescription(requestBody.getProductDescription());
+            }
+
+            if (requestBody.getProductPrice() != null) {
+                updatedProduct.setProductPrice(requestBody.getProductPrice());
             }
 
             if (requestBody.getProductCount() != null) {
