@@ -1,22 +1,31 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import './App.css'
 
-const API = "http://localhost:8080/products";
+const API = "http://localhost:8081/products";
+const TYPES = ["Material", "Safety", "Equipment"];
 
-const initialForm = { name: "", description: "", price: "" };
+const initialForm = { 
+    name: "", 
+    type: "Material", 
+    description: "", 
+    price: "", 
+    count: "", 
+    threshold: ""
+};
 
 function App() {
-  // Hooks declarations:
   const [products, setProducts] = useState([]);
-
-  // The hook below should be used for the inventory microservice at some point
   const [inventory, setInventory] = useState([]);
-
   const [form, setForm] = useState(initialForm);
   const [editingId, setEditingId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
+
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searchCount, setSearchCount] = useState("");
+  const [filterType, setFilterType] = useState("all");
+  const [sortBy, setSortBy] = useState("id");
 
   useEffect(() => {
     fetchProducts();
@@ -27,23 +36,44 @@ function App() {
     setTimeout(() => setToast(null), 3000);
   };
 
-  const fetchProducts = () => {
-    setLoading(true);
-    fetch(API)
-      .then(res => res.json())
-      .then(data => { setProducts(data); setLoading(false); })
-      .catch(err => { console.error(err); setLoading(false); });
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch(API);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+
+      const normalizedProducts = data.map((product) => ({
+        ...product,
+        product_type:  product.product_type ?? "",
+        product_count: Number(product.product_count ?? 0),
+        threshold:     Number(product.threshold ?? 0),
+      }));
+
+      setProducts(normalizedProducts);
+    } catch (err) {
+      console.error(err);
+      showToast("Failed to fetch products", "error");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSubmit = () => {
-    if (!form.name.trim()) return showToast("Name is required", "error");
-    if (!form.price.trim()) return showToast("Price is required", "error");
+    if (!form.name.trim())        return showToast("Name is required", "error");
+    if (!form.type.trim())        return showToast("Type is required", "error");
     if (!form.description.trim()) return showToast("Description is required", "error");
+    if (!form.price.toString().trim()) return showToast("Price is required", "error");
+    if (form.count === "")        return showToast("Count is required", "error");
+    if (form.threshold === "")    return showToast("Threshold is required", "error");
 
     const payload = {
-      name: form.name,
-      description: form.description,
-      price: form.price === "" ? null : (Math.round((parseFloat(form.price) * 100))) / 100,
+        product_name:        form.name,
+        product_type:        form.type,
+        product_description: form.description,
+        product_price:       Math.round(parseFloat(form.price) * 100) / 100,
+        product_count:       parseInt(form.count),
+        threshold:           parseInt(form.threshold)
     };
 
     if (editingId !== null) {
@@ -67,8 +97,8 @@ function App() {
         body: JSON.stringify(payload),
       })
         .then(res => res.json())
-        .then(data => {
-          setProducts(data);
+        .then(() => {
+          fetchProducts();
           setForm(initialForm);
           showToast("Product added!");
         })
@@ -77,11 +107,14 @@ function App() {
   };
 
   const handleEdit = (product) => {
-    setEditingId(product.id);
+    setEditingId(product.product_id);
     setForm({
-      name: product.name || "",
-      description: product.description || "",
-      price: product.price ?? "",
+        name:        product.product_name        || "",
+        type:        product.product_type        || "Material",
+        description: product.product_description || "",
+        price:       product.product_price       ?? "",
+        count:       product.product_count       ?? "",
+        threshold:   product.threshold           ?? ""
     });
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -102,16 +135,91 @@ function App() {
     setEditingId(null);
   };
 
+  const filteredProducts = useMemo(() => {
+    return products
+      .filter((product) => {
+        const nameValue      = product.product_name?.toLowerCase() || "";
+        const idValue        = String(product.product_id ?? "");
+        const countValue     = String(product.product_count ?? "");
+        const thresholdValue = String(product.threshold ?? "");
+        const typeValue      = product.product_type || "";
+
+        let matchesMainSearch = true;
+        if (searchTerm.trim() !== "") {
+          if (sortBy === "id")             matchesMainSearch = idValue.includes(searchTerm.trim());
+          else if (sortBy === "name")      matchesMainSearch = nameValue.includes(searchTerm.toLowerCase().trim());
+          else if (sortBy === "count")     matchesMainSearch = countValue.includes(searchTerm.trim());
+          else if (sortBy === "threshold") matchesMainSearch = thresholdValue.includes(searchTerm.trim());
+        }
+
+        const secondaryValue = sortBy === "threshold" ? thresholdValue : countValue;
+        const matchesSecondarySearch =
+          searchCount.trim() === "" || secondaryValue.includes(searchCount.trim());
+
+        const matchesType =
+          filterType === "all" || typeValue === filterType;
+
+        return matchesMainSearch && matchesSecondarySearch && matchesType;
+      })
+      .sort((a, b) => {
+        if (sortBy === "id")        return (a.product_id ?? 0) - (b.product_id ?? 0);
+        if (sortBy === "name")      return (a.product_name || "").localeCompare(b.product_name || "");
+        if (sortBy === "count")     return (a.product_count ?? 0) - (b.product_count ?? 0);
+        if (sortBy === "threshold") return (a.threshold ?? 0) - (b.threshold ?? 0);
+        return 0;
+      });
+  }, [products, searchTerm, searchCount, filterType, sortBy]);
+
   return (
     <>
-    {/* ACTUAL REACT APP DISPLAY STARTS HERE WITHIN THE RETURN */}
-
       <div className="app">
         {/* Header */}
         <div className="header">
           <div className="header-tag">inventory system</div>
           <h1>Products</h1>
-          <div className="header-sub"> Manage your product catalog</div>
+          <div className="header-sub">Manage your product catalog</div>
+        </div>
+
+        {/* Search & Filter Bar From Integrated Frontend */}
+        <div className="search-filter-bar">
+          <div className="search-group">
+            <input
+              type="text"
+              placeholder={`Search by ${sortBy === 'id' ? 'Product ID' : sortBy === 'name' ? 'Name' : sortBy === 'count' ? 'Count' : 'Threshold'}...`}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <input
+            type="number"
+            placeholder={sortBy === "threshold" ? "Search by threshold" : "Search by count"}
+            value={searchCount}
+            onChange={e => setSearchCount(e.target.value)}
+          />
+          <div className="filter-group">
+            <select
+              value={filterType}
+              onChange={(e) => setFilterType(e.target.value)}
+              className="filter-select"
+            >
+              <option value="all">All Types</option>
+              {TYPES.map(type => (
+                <option key={type} value={type}>{type}</option>
+              ))}
+            </select>
+          </div>
+          <div className="sort-group">
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="sort-select"
+            >
+              <option value="id">Sort by ID</option>
+              <option value="name">Sort by Name</option>
+              <option value="count">Sort by Count</option>
+              <option value="threshold">Sort by Threshold</option>
+            </select>
+          </div>
         </div>
 
         {/* Form */}
@@ -131,13 +239,45 @@ function App() {
               />
             </div>
             <div className="field">
+              <label>Type</label>
+              <select
+                value={form.type}
+                onChange={e => setForm({ ...form, type: e.target.value })}
+              >
+                {TYPES.map(type => (
+                  <option key={type} value={type}>{type}</option>
+                ))}
+              </select>
+            </div>
+            <div className="field">
               <label>Price ($)</label>
               <input
                 type="number"
                 step="0.01"
-                placeholder="0"
+                min="0"
+                placeholder="0.00"
                 value={form.price}
                 onChange={e => setForm({ ...form, price: e.target.value })}
+              />
+            </div>
+            <div className="field">
+              <label>Count</label>
+              <input
+                type="number"
+                min="0"
+                placeholder="0"
+                value={form.count}
+                onChange={e => setForm({ ...form, count: e.target.value })}
+              />
+            </div>
+            <div className="field">
+              <label>Threshold</label>
+              <input
+                type="number"
+                min="0"
+                placeholder="0"
+                value={form.threshold}
+                onChange={e => setForm({ ...form, threshold: e.target.value })}
               />
             </div>
             <div className="field full">
@@ -162,7 +302,9 @@ function App() {
         {/* List */}
         <div className="list-header">
           <h2>Catalog</h2>
-          <span className="count-badge">{products.length} items</span>
+          <span className="count-badge">
+            {filteredProducts.length} of {products.length} items
+          </span>
         </div>
 
         {loading ? (
@@ -176,21 +318,31 @@ function App() {
             <div className="empty-icon">📦</div>
             <p>No products yet. Add one above.</p>
           </div>
+        ) : filteredProducts.length === 0 ? (
+          <div className="empty">
+            <div className="empty-icon">🔍</div>
+            <p>No products match your filters. Try adjusting search or type filter.</p>
+          </div>
         ) : (
           <div className="product-list">
-            {products.map((product, i) => (
+            {filteredProducts.map((product, i) => (
               <div
-                key={product.id}
-                className={`product-card ${editingId === product.id ? 'editing-active' : ''}`}
+                key={product.product_id}
+                className={`product-card ${editingId === product.product_id ? 'editing-active' : ''}`}
                 style={{ animationDelay: `${i * 40}ms` }}
               >
-                <div className="product-id">#{product.id}</div>
+                <div className="product-id">#{product.product_id}</div>
                 <div className="product-info">
-                  <div className="product-name">{product.name}</div>
-                  <div className="product-desc">{product.description || '—'}</div>
+                  <div className="product-name">{product.product_name}</div>
+                  <div className="product-desc">{product.product_description}</div>
                 </div>
-                <div className={`product-price ${product.price == null ? 'null-price' : ''}`}>
-                  {product.price != null ? `$${product.price.toFixed(2)}` : 'N/A'}
+                <div className="product-meta">
+                  <strong>Type:</strong> {product.product_type} ·
+                  <strong> Count:</strong> {product.product_count} ·
+                  <strong> Threshold:</strong> {product.threshold}
+                </div>
+                <div className="product-price">
+                  ${product.product_price.toFixed(2)}
                 </div>
                 <div className="product-actions">
                   <button className="btn btn-edit" onClick={() => handleEdit(product)}>Edit</button>
@@ -207,10 +359,10 @@ function App() {
         <div className="overlay" onClick={() => setDeleteConfirm(null)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
             <h3>Delete product?</h3>
-            <p>"{deleteConfirm.name}" will be permanently removed from your catalog.</p>
+            <p>"{deleteConfirm.product_name}" will be permanently removed from your catalog.</p>
             <div className="modal-actions">
               <button className="btn btn-secondary" onClick={() => setDeleteConfirm(null)}>Cancel</button>
-              <button className="btn btn-danger" onClick={() => handleDelete(deleteConfirm.id)}>Delete</button>
+              <button className="btn btn-danger" onClick={() => handleDelete(deleteConfirm.product_id)}>Delete</button>
             </div>
           </div>
         </div>
