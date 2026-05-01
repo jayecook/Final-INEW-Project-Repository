@@ -626,3 +626,8 @@ body {
     padding: 1.25rem;
   }
 }
+
+.clear-btn {
+  flex: 1 1 100%;
+  margin-top: 0.5rem;
+}

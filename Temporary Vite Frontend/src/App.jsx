@@ -15,9 +15,35 @@ const initialForm = {
 
 // Took the FilterBar out as a component
 
-function FilterBar({ filters, setFilters, TYPES }) {
+function FilterBar({ filters, setFilters, TYPES, showToast }) {
   const update = (key, value) => {
     setFilters(prev => ({ ...prev, [key]: value }));
+  };
+
+  const updateNumeric = (key, value) => {
+    if (value !== "" && Number(value) < 0) {
+      showToast("No negative values allowed", "error");
+      return;
+    }
+    update(key, value);
+  };
+
+  const isActive =
+    filters.id !== "" ||
+    filters.name !== "" ||
+    filters.count !== "" ||
+    filters.threshold !== "" ||
+    filters.type !== "all";
+
+  const handleClear = () => {
+    setFilters(prev => ({
+      ...prev,
+      id: "",
+      name: "",
+      count: "",
+      threshold: "",
+      type: "all",
+    }));
   };
 
   return (
@@ -40,14 +66,14 @@ function FilterBar({ filters, setFilters, TYPES }) {
         type="number"
         placeholder="Search by Count"
         value={filters.count}
-        onChange={(e) => update("count", e.target.value)}
+        onChange={(e) => updateNumeric("count", e.target.value)}
       />
 
       <input
         type="number"
         placeholder="Search by Threshold"
         value={filters.threshold}
-        onChange={(e) => update("threshold", e.target.value)}
+        onChange={(e) => updateNumeric("threshold", e.target.value)}
       />
 
       <select
@@ -69,6 +95,12 @@ function FilterBar({ filters, setFilters, TYPES }) {
         <option value="count">Sort by Count</option>
         <option value="threshold">Sort by Threshold</option>
       </select>
+
+      {isActive && (
+        <button className="btn btn-secondary" onClick={handleClear}>
+          Clear Filters
+        </button>
+      )}
     </div>
   );
 }
@@ -130,6 +162,9 @@ function App() {
     if (!form.price.toString().trim()) return showToast("Price is required", "error");
     if (form.count === "")        return showToast("Count is required", "error");
     if (form.threshold === "")    return showToast("Threshold is required", "error");
+    if (parseFloat(form.price) < 0)   return showToast("No negative values allowed", "error");
+    if (parseInt(form.count) < 0)     return showToast("No negative values allowed", "error");
+    if (parseInt(form.threshold) < 0) return showToast("No negative values allowed", "error");
 
     const payload = {
         product_name:        form.name,
@@ -197,6 +232,14 @@ function App() {
   const handleCancel = () => {
     setForm(initialForm);
     setEditingId(null);
+  };
+
+  const handleFormNumeric = (key, value) => {
+    if (value !== "" && Number(value) < 0) {
+      showToast("No negative values allowed", "error");
+      return;
+    }
+    setForm({ ...form, [key]: value });
   };
 
   const filteredProducts = useMemo(() => {
@@ -270,7 +313,7 @@ function App() {
                 min="0"
                 placeholder="0.00"
                 value={form.price}
-                onChange={e => setForm({ ...form, price: e.target.value })}
+                onChange={e => handleFormNumeric("price", e.target.value)}
               />
             </div>
             <div className="field">
@@ -280,7 +323,7 @@ function App() {
                 min="0"
                 placeholder="0"
                 value={form.count}
-                onChange={e => setForm({ ...form, count: e.target.value })}
+                onChange={e => handleFormNumeric("count", e.target.value)}
               />
             </div>
             <div className="field">
@@ -290,7 +333,7 @@ function App() {
                 min="0"
                 placeholder="0"
                 value={form.threshold}
-                onChange={e => setForm({ ...form, threshold: e.target.value })}
+                onChange={e => handleFormNumeric("threshold", e.target.value)}
               />
             </div>
             <div className="field full">
@@ -312,8 +355,8 @@ function App() {
           </div>
         </div>
 
-        {/* Literally the only line needed for the FilterBar component within App.jsx App body */}
-        <FilterBar filters={filters} setFilters={setFilters} TYPES={TYPES} />
+        {/* Literally the only line needed for the FilterBar component within App.jsx App body (now with showToast as well) */}
+        <FilterBar filters={filters} setFilters={setFilters} TYPES={TYPES} showToast={showToast} />
 
         {/* List */}
         <div className="list-header">
