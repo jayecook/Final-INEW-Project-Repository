@@ -13,6 +13,66 @@ const initialForm = {
     threshold: ""
 };
 
+// Took the FilterBar out as a component
+
+function FilterBar({ filters, setFilters, TYPES }) {
+  const update = (key, value) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
+  };
+
+  return (
+    <div className="search-filter-bar">
+      <input
+        type="text"
+        placeholder="Search by ID"
+        value={filters.id}
+        onChange={(e) => update("id", e.target.value)}
+      />
+
+      <input
+        type="text"
+        placeholder="Search by Name"
+        value={filters.name}
+        onChange={(e) => update("name", e.target.value)}
+      />
+
+      <input
+        type="number"
+        placeholder="Search by Count"
+        value={filters.count}
+        onChange={(e) => update("count", e.target.value)}
+      />
+
+      <input
+        type="number"
+        placeholder="Search by Threshold"
+        value={filters.threshold}
+        onChange={(e) => update("threshold", e.target.value)}
+      />
+
+      <select
+        value={filters.type}
+        onChange={(e) => update("type", e.target.value)}
+      >
+        <option value="all">All Types</option>
+        {TYPES.map(type => (
+          <option key={type} value={type}>{type}</option>
+        ))}
+      </select>
+
+      <select
+        value={filters.sortBy}
+        onChange={(e) => update("sortBy", e.target.value)}
+      >
+        <option value="id">Sort by ID</option>
+        <option value="name">Sort by Name</option>
+        <option value="count">Sort by Count</option>
+        <option value="threshold">Sort by Threshold</option>
+      </select>
+    </div>
+  );
+}
+
 function App() {
   const [products, setProducts] = useState([]);
   const [inventory, setInventory] = useState([]);
@@ -22,10 +82,14 @@ function App() {
   const [toast, setToast] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
 
-  const [searchTerm, setSearchTerm] = useState("");
-  const [searchCount, setSearchCount] = useState("");
-  const [filterType, setFilterType] = useState("all");
-  const [sortBy, setSortBy] = useState("id");
+  const [filters, setFilters] = useState({
+    id: "",
+    name: "",
+    count: "",
+    threshold: "",
+    type: "all",
+    sortBy: "id"
+  });
 
   useEffect(() => {
     fetchProducts();
@@ -138,37 +202,28 @@ function App() {
   const filteredProducts = useMemo(() => {
     return products
       .filter((product) => {
-        const nameValue      = product.product_name?.toLowerCase() || "";
-        const idValue        = String(product.product_id ?? "");
-        const countValue     = String(product.product_count ?? "");
-        const thresholdValue = String(product.threshold ?? "");
-        const typeValue      = product.product_type || "";
+        const name = product.product_name?.toLowerCase() || "";
+        const id = String(product.product_id ?? "");
+        const count = String(product.product_count ?? "");
+        const threshold = String(product.threshold ?? "");
+        const type = product.product_type || "";
 
-        let matchesMainSearch = true;
-        if (searchTerm.trim() !== "") {
-          if (sortBy === "id")             matchesMainSearch = idValue.includes(searchTerm.trim());
-          else if (sortBy === "name")      matchesMainSearch = nameValue.includes(searchTerm.toLowerCase().trim());
-          else if (sortBy === "count")     matchesMainSearch = countValue.includes(searchTerm.trim());
-          else if (sortBy === "threshold") matchesMainSearch = thresholdValue.includes(searchTerm.trim());
-        }
-
-        const secondaryValue = sortBy === "threshold" ? thresholdValue : countValue;
-        const matchesSecondarySearch =
-          searchCount.trim() === "" || secondaryValue.includes(searchCount.trim());
-
-        const matchesType =
-          filterType === "all" || typeValue === filterType;
-
-        return matchesMainSearch && matchesSecondarySearch && matchesType;
+        return (
+          (filters.id === "" || id.includes(filters.id)) &&
+          (filters.name === "" || name.includes(filters.name.toLowerCase())) &&
+          (filters.count === "" || count.includes(filters.count)) &&
+          (filters.threshold === "" || threshold.includes(filters.threshold)) &&
+          (filters.type === "all" || type === filters.type)
+        );
       })
       .sort((a, b) => {
-        if (sortBy === "id")        return (a.product_id ?? 0) - (b.product_id ?? 0);
-        if (sortBy === "name")      return (a.product_name || "").localeCompare(b.product_name || "");
-        if (sortBy === "count")     return (a.product_count ?? 0) - (b.product_count ?? 0);
-        if (sortBy === "threshold") return (a.threshold ?? 0) - (b.threshold ?? 0);
+        if (filters.sortBy === "id") return (a.product_id ?? 0) - (b.product_id ?? 0);
+        if (filters.sortBy === "name") return (a.product_name || "").localeCompare(b.product_name || "");
+        if (filters.sortBy === "count") return (a.product_count ?? 0) - (b.product_count ?? 0);
+        if (filters.sortBy === "threshold") return (a.threshold ?? 0) - (b.threshold ?? 0);
         return 0;
       });
-  }, [products, searchTerm, searchCount, filterType, sortBy]);
+  }, [products, filters]);
 
   return (
     <>
@@ -178,48 +233,6 @@ function App() {
           <div className="header-tag">inventory system</div>
           <h1>Products</h1>
           <div className="header-sub">Manage your product catalog</div>
-        </div>
-
-        {/* Search & Filter Bar From Integrated Frontend */}
-        <div className="search-filter-bar">
-          <div className="search-group">
-            <input
-              type="text"
-              placeholder={`Search by ${sortBy === 'id' ? 'Product ID' : sortBy === 'name' ? 'Name' : sortBy === 'count' ? 'Count' : 'Threshold'}...`}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-          <input
-            type="number"
-            placeholder={sortBy === "threshold" ? "Search by threshold" : "Search by count"}
-            value={searchCount}
-            onChange={e => setSearchCount(e.target.value)}
-          />
-          <div className="filter-group">
-            <select
-              value={filterType}
-              onChange={(e) => setFilterType(e.target.value)}
-              className="filter-select"
-            >
-              <option value="all">All Types</option>
-              {TYPES.map(type => (
-                <option key={type} value={type}>{type}</option>
-              ))}
-            </select>
-          </div>
-          <div className="sort-group">
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="sort-select"
-            >
-              <option value="id">Sort by ID</option>
-              <option value="name">Sort by Name</option>
-              <option value="count">Sort by Count</option>
-              <option value="threshold">Sort by Threshold</option>
-            </select>
-          </div>
         </div>
 
         {/* Form */}
@@ -298,6 +311,9 @@ function App() {
             )}
           </div>
         </div>
+
+        {/* Literally the only line needed for the FilterBar component within App.jsx App body */}
+        <FilterBar filters={filters} setFilters={setFilters} TYPES={TYPES} />
 
         {/* List */}
         <div className="list-header">

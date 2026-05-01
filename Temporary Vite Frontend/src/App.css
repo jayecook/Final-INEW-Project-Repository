@@ -545,9 +545,8 @@ body {
   min-width: 200px;
 }
 
-.search-group input,
-.filter-select,
-.sort-select {
+.search-filter-bar input,
+.search-filter-bar select {
   width: 100%;
   padding: 1rem 1.25rem;
   background: #1a1a1a;
@@ -563,17 +562,15 @@ body {
   color: #94a3b8;
 }
 
-.filter-select:focus,
-.sort-select:focus,
-.search-group input:focus {
+.search-filter-bar input:focus,
+.search-filter-bar select:focus {
   outline: none;
   border-color: #fbbf24;
   box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
 }
 
-.search-group input:hover,
-.filter-select:hover,
-.sort-select:hover {
+.search-filter-bar input:hover,
+.search-filter-bar select:hover {
   border-color: #fbbf24;
 }
 
@@ -586,6 +583,10 @@ body {
   font-size: 1rem;
   font-family: inherit;
   transition: all 0.2s ease;
+}
+
+.search-filter-bar input::placeholder {
+  color: #94a3b8;
 }
 
 .search-filter-bar input[type="number"]::placeholder {
